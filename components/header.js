@@ -1,5 +1,6 @@
 import { gql } from "@apollo/client";
 import Link from "next/link";
+import SearchBar from "./SearchBar";
 import style from "../styles/header.module.css";
 
 export default function Header({ siteTitle, siteDescription, menuItems }) {
@@ -11,15 +12,18 @@ export default function Header({ siteTitle, siteDescription, menuItems }) {
           <p className={style.siteDescription}>{siteDescription}</p>
         </Link>
 
-        <nav className={style.nav}>
-          <ul>
-            {(Array.isArray(menuItems) ? menuItems : []).map((item) => (
-              <li key={item.id}>
-                <Link href={item.uri}>{item.label}</Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className={style.headerRight}>
+          <SearchBar />
+          <nav className={style.nav}>
+            <ul>
+              {(Array.isArray(menuItems) ? menuItems : []).map((item) => (
+                <li key={item.id}>
+                  <Link href={item.uri}>{item.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
       </div>
     </header>
   );
