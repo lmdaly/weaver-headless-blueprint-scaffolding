@@ -1,8 +1,8 @@
 import Head from "next/head";
 import Link from "next/link";
-import Header from "../components/Header";
+import Header from "../components/header";
 import EntryHeader from "../components/EntryHeader";
-import Footer from "../components/Footer";
+import Footer from "../components/footer";
 import style from "../styles/front-page.module.css";
 import { SITE_DATA_QUERY } from "../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../queries/MenuQueries";
