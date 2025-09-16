@@ -24,12 +24,18 @@ export default function SearchResults() {
   const performSearch = async (query, offset = 0) => {
     if (!query) return;
     
+    console.log('performSearch called with:', query, 'offset:', offset);
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=10&offset=${offset}`);
+      const url = `/api/search?q=${encodeURIComponent(query)}&limit=10&offset=${offset}`;
+      console.log('Fetching:', url);
+      
+      const response = await fetch(url);
       const result = await response.json();
+      
+      console.log('Search response:', response.status, result);
       
       if (!response.ok) {
         throw new Error(result.error || 'Search failed');
@@ -264,9 +270,5 @@ export default function SearchResults() {
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page: SearchResults,
-    revalidate: 900,
-  });
-}
+// Remove getStaticProps to make this a dynamic page
+// Search pages should not be statically generated
