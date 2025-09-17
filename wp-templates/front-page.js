@@ -10,24 +10,40 @@ import { useQuery, gql } from "@apollo/client";
 import { getNextStaticProps } from "@faustwp/core";
 import { useState } from "react";
 
-// GraphQL query to get the page set as homepage in WordPress Reading Settings
-const GET_HOMEPAGE_CONTENT = gql`
-  query GetHomepageContent($pageOnFront: Int) {
-    generalSettings {
-      title
-      description
-      pageOnFront
-      showOnFront
-    }
-    pageBy(id: $pageOnFront, idType: DATABASE_ID) {
-      id
-      title
-      content
-      slug
-      featuredImage {
-        node {
-          sourceUrl
-          altText
+// GraphQL query to get a random post for the homepage
+const GET_RANDOM_POST = gql`
+  query GetRandomPost {
+    posts(first: 1, where: { orderby: { field: RAND, order: DESC } }) {
+      nodes {
+        id
+        title
+        content
+        excerpt
+        date
+        slug
+        uri
+        author {
+          node {
+            name
+          }
+        }
+        categories {
+          nodes {
+            name
+            slug
+          }
+        }
+        tags {
+          nodes {
+            name
+            slug
+          }
+        }
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+          }
         }
       }
     }
@@ -45,33 +61,23 @@ export default function FrontPage(props) {
 
   const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY) || {};
-  
-  // First get the general settings to know which page is set as homepage
-  const generalSettings = siteDataQuery?.data?.generalSettings || {};
-  const { showOnFront, pageOnFront } = generalSettings;
-  
-  // Then query for the homepage content if a static page is set
-  const homepageDataQuery = useQuery(GET_HOMEPAGE_CONTENT, {
-    variables: { pageOnFront: pageOnFront },
-    skip: showOnFront !== 'page' || !pageOnFront
-  }) || {};
+  const randomPostQuery = useQuery(GET_RANDOM_POST) || {};
 
   const siteData = siteDataQuery?.data?.generalSettings || {};
   const menuItems = headerMenuDataQuery?.data?.primaryMenuItems?.nodes || {
     nodes: [],
   };
-  const homepagePage = homepageDataQuery?.data?.pageBy || {};
+  const randomPost = randomPostQuery?.data?.posts?.nodes?.[0] || null;
   
   const { title: siteTitle, description: siteDescription } = siteData;
-  const { title: pageTitle, content: pageContent, featuredImage } = homepagePage;
 
-  // Check if WordPress is set to show a static page as homepage
-  const isStaticHomepage = showOnFront === 'page' && pageOnFront && pageContent;
+  // Check if we have a random post to display
+  const hasRandomPost = randomPost && randomPost.title && randomPost.content;
 
   return (
     <>
       <Head>
-        <title>{isStaticHomepage && pageTitle ? `${pageTitle} - ${siteTitle}` : siteTitle}</title>
+        <title>{hasRandomPost ? `${randomPost.title} - ${siteTitle}` : siteTitle}</title>
       </Head>
 
       <Header
@@ -81,32 +87,102 @@ export default function FrontPage(props) {
       />
 
       <main className="container">
-        {isStaticHomepage ? (
-          // Display the WordPress page set as homepage
+        {hasRandomPost ? (
+          // Display the random post
           <>
-            <EntryHeader title={pageTitle} />
+            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+              <span style={{ 
+                background: '#e3f2fd', 
+                color: '#1976d2', 
+                padding: '8px 16px', 
+                borderRadius: '20px', 
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                🎲 Random Post
+              </span>
+            </div>
+            
+            <EntryHeader 
+              title={randomPost.title} 
+              date={randomPost.date}
+              author={randomPost.author?.node?.name}
+            />
             
             {/* Display featured image if it exists */}
-            {featuredImage?.node?.sourceUrl && (
+            {randomPost.featuredImage?.node?.sourceUrl && (
               <div className={style.featuredImage}>
                 <img 
-                  src={featuredImage.node.sourceUrl} 
-                  alt={featuredImage.node.altText || pageTitle}
+                  src={randomPost.featuredImage.node.sourceUrl} 
+                  alt={randomPost.featuredImage.node.altText || randomPost.title}
                   style={{ width: '100%', height: 'auto', marginBottom: '2rem' }}
                 />
               </div>
             )}
 
-            {/* Display the page content */}
+            {/* Display post metadata */}
+            <div style={{ marginBottom: '2rem', fontSize: '14px', color: '#666' }}>
+              {randomPost.categories?.nodes?.length > 0 && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Categories:</strong>{' '}
+                  {randomPost.categories.nodes.map((category, index) => (
+                    <span key={category.slug}>
+                      {category.name}
+                      {index < randomPost.categories.nodes.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {randomPost.tags?.nodes?.length > 0 && (
+                <div>
+                  <strong>Tags:</strong>{' '}
+                  {randomPost.tags.nodes.map((tag, index) => (
+                    <span key={tag.slug}>
+                      {tag.name}
+                      {index < randomPost.tags.nodes.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Display the post content */}
             <section 
               className={style.pageContent}
-              dangerouslySetInnerHTML={{ __html: pageContent }}
+              dangerouslySetInnerHTML={{ __html: randomPost.content }}
             />
+
+            {/* Link to view the full post */}
+            <div style={{ 
+              marginTop: '3rem', 
+              padding: '2rem', 
+              background: '#f8f9fa', 
+              borderRadius: '8px',
+              textAlign: 'center'
+            }}>
+              <Link 
+                href={randomPost.uri}
+                style={{
+                  display: 'inline-block',
+                  background: '#007cba',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontWeight: '500'
+                }}
+              >
+                View Full Post →
+              </Link>
+              <p style={{ marginTop: '1rem', fontSize: '14px', color: '#666' }}>
+                Refresh the page to see another random post!
+              </p>
+            </div>
           </>
         ) : (
-          // Default content when no static homepage is set
+          // Fallback content when no posts are available
           <>
-            <EntryHeader title="Welcome to the Faust Scaffold Blueprint" />
+            <EntryHeader title="Welcome to Your Headless WordPress Site" />
 
             <section className={style.cardGrid}>
               <Link
@@ -435,5 +511,8 @@ FrontPage.queries = [
   },
   {
     query: HEADER_MENU_QUERY,
+  },
+  {
+    query: GET_RANDOM_POST,
   },
 ];
