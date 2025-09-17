@@ -10,13 +10,19 @@
     "test:format": "prettier . --check"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.14",
     "@apollo/client": "^3.13.8",
     "@faustwp/cli": "^3.2.3",
     "@faustwp/core": "^3.2.6",
+    "ai": "^5.0.44",
     "graphql": "^16.10.0",
     "next": "^15.5.2",
+    "openai-edge": "^1.2.2",
     "prettier": "^3.5.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
+    "zod": "^4.1.9"
   }
 }
