@@ -32,8 +32,11 @@ export default function ChatbotPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.text();
-      setMessages(prev => [...prev, { role: 'assistant', content: data }]);
+      const data = await response.json();
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.response || data.error || 'No response received'
+      }]);
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, { 

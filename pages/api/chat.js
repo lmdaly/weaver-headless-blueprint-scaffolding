@@ -1,12 +1,6 @@
-// IMPORTANT! Set the runtime to edge (Pages Router equivalent)
-export const config = {
-  runtime: 'edge',
-}
-
-import { convertToCoreMessages, streamText } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-
-import { smartSearchTool, weatherTool } from "../../lib/tools.js";
+import { generateText } from "ai";
+import { getContext } from "../../lib/context.js";
 
 /**
  * Initialize the Google Generative AI API
@@ -15,47 +9,74 @@ const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
-export default async function handler(req) {
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    const { messages } = await req.json();
+    const { messages } = req.body;
+    
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Invalid messages format' });
+    }
 
-    const coreMessages = convertToCoreMessages(messages);
+    const lastMessage = messages[messages.length - 1];
+    const userQuery = lastMessage.content;
 
-    const smartSearchPrompt = `
-    - You can use the 'smartSearchTool' to find information relating to tv shows.
-      - WP Engine Smart Search is a powerful tool for finding information about TV shows.
-      - After the 'smartSearchTool' provides results (even if it's an error or no information found)
-      - You MUST then formulate a conversational response to the user based on those results but also use the tool if the users query is deemed plausible.
-        - If search results are found, summarize them for the user.
-        - If no information is found or an error occurs, inform the user clearly.`;
+    console.log('User query:', userQuery);
 
-    const systemPromptContent = `
-    - You are a friendly and helpful AI assistant
-    - You can use the 'weatherTool' to provide current weather information for a specific location.
-    - Do not invent information. Stick to the data provided by the tool.`;
+    // Get context from Smart Search
+    let searchContext = '';
+    try {
+      const contextResult = await getContext(userQuery);
+      
+      if (contextResult.data?.similarity?.docs?.length > 0) {
+        const docs = contextResult.data.similarity.docs;
+        searchContext = docs.map(doc => 
+          `Title: ${doc.data.post_title}\nContent: ${doc.data.post_content?.substring(0, 500)}...`
+        ).join('\n\n');
+        console.log('Found search context:', docs.length, 'documents');
+      } else {
+        console.log('No search results found');
+      }
+    } catch (searchError) {
+      console.error('Search error:', searchError);
+    }
 
-    const response = streamText({
+    // Create conversation history
+    const conversationHistory = messages.map(msg => 
+      `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+    ).join('\n');
+
+    // Generate response with Gemini
+    const prompt = `You are a helpful AI assistant for a website. You can search for information about the website's content.
+
+${searchContext ? `Here is relevant information from the website about "${userQuery}":\n\n${searchContext}\n\n` : ''}
+
+Conversation history:
+${conversationHistory}
+
+Please provide a helpful response based on the available information. If you found relevant content above, use it to answer the user's question. If no relevant content was found, let the user know and provide general assistance.`;
+
+    const result = await generateText({
       model: google("models/gemini-2.0-flash"),
-      system: [smartSearchPrompt, systemPromptContent].join("\n"),
-      messages: coreMessages,
-      tools: {
-        smartSearchTool,
-        weatherTool,
-      },
-      onStepFinish: async (result) => {
-        // Log token usage for each step
-        if (result.usage) {
-          console.log(
-            `[Token Usage] Prompt tokens: ${result.usage.promptTokens}, Completion tokens: ${result.usage.completionTokens}, Total tokens: ${result.usage.totalTokens}`
-          );
-        }
-      },
-      maxSteps: 5,
+      prompt: prompt,
+      maxTokens: 1000,
     });
 
-    // Convert the response into a friendly text-stream
-    return response.toDataStreamResponse({});
-  } catch (e) {
-    throw e;
+    console.log('Generated response successfully');
+
+    return res.status(200).json({
+      response: result.text,
+      usage: result.usage
+    });
+
+  } catch (error) {
+    console.error('Chat API error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message
+    });
   }
 }
