@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.14",
+    "@ai-sdk/react": "^2.0.44",
     "@apollo/client": "^3.13.8",
     "@faustwp/cli": "^3.2.3",
     "@faustwp/core": "^3.2.6",

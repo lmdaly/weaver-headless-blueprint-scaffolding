@@ -50,7 +50,7 @@ This guide will help you set up the RAG (Retrieval-Augmented Generation) chatbot
 Dependencies are already installed. If you need to reinstall:
 
 ```bash
-npm install @ai-sdk/google ai openai-edge react-icons react-markdown zod
+npm install @ai-sdk/google @ai-sdk/react ai openai-edge react-icons react-markdown zod
 ```
 
 ## Usage
