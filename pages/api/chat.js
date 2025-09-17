@@ -1,6 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
-import { getContext } from "../../lib/context.js";
+import { performSearch } from "../../lib/smartSearch.js";
 
 /**
  * Initialize the Google Generative AI API
@@ -26,17 +26,19 @@ export default async function handler(req, res) {
 
     console.log('User query:', userQuery);
 
-    // Get context from Smart Search
+    // Get context from Smart Search (using semantic similarity search)
     let searchContext = '';
     try {
-      const contextResult = await getContext(userQuery);
+      const searchResults = await performSearch(userQuery, {
+        limit: 5,
+        offset: 0
+      });
       
-      if (contextResult.data?.similarity?.docs?.length > 0) {
-        const docs = contextResult.data.similarity.docs;
-        searchContext = docs.map(doc => 
-          `Title: ${doc.data.post_title}\nContent: ${doc.data.post_content?.substring(0, 500)}...`
+      if (searchResults.results?.length > 0) {
+        searchContext = searchResults.results.map(result => 
+          `Title: ${result.title}\nContent: ${result.content?.substring(0, 500)}...\nScore: ${result.score}`
         ).join('\n\n');
-        console.log('Found search context:', docs.length, 'documents');
+        console.log('Found search context:', searchResults.results.length, 'documents');
       } else {
         console.log('No search results found');
       }

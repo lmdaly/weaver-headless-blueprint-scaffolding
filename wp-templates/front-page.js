@@ -8,6 +8,7 @@ import { SITE_DATA_QUERY } from "../queries/SiteSettingsQuery";
 import { HEADER_MENU_QUERY } from "../queries/MenuQueries";
 import { useQuery, gql } from "@apollo/client";
 import { getNextStaticProps } from "@faustwp/core";
+import { useState } from "react";
 
 // GraphQL query to get the page set as homepage in WordPress Reading Settings
 const GET_HOMEPAGE_CONTENT = gql`
@@ -38,6 +39,9 @@ export default function FrontPage(props) {
   if (props.loading) {
     return <>Loading...</>;
   }
+
+  // Chatbot state
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY) || {};
@@ -324,6 +328,94 @@ export default function FrontPage(props) {
           </>
         )}
       </main>
+
+      {/* Floating Chatbot Widget */}
+      {isChatOpen && (
+        <div style={{
+          position: 'fixed',
+          bottom: '80px',
+          right: '20px',
+          width: '400px',
+          height: '600px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          {/* Chat Header */}
+          <div style={{
+            backgroundColor: '#0f172a',
+            color: 'white',
+            padding: '16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>💬 Smart Search Chat</h3>
+            <button
+              onClick={() => setIsChatOpen(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '20px',
+                cursor: 'pointer',
+                padding: '4px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          
+          {/* Chat Iframe */}
+          <iframe
+            src="/chatbot"
+            style={{
+              flex: 1,
+              border: 'none',
+              width: '100%'
+            }}
+            title="Smart Search Chatbot"
+          />
+        </div>
+      )}
+
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          backgroundColor: '#3b82f6',
+          border: 'none',
+          color: 'white',
+          fontSize: '24px',
+          cursor: 'pointer',
+          boxShadow: '0 4px 16px rgba(59, 130, 246, 0.4)',
+          zIndex: 1001,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseOver={(e) => {
+          e.target.style.transform = 'scale(1.1)';
+          e.target.style.backgroundColor = '#2563eb';
+        }}
+        onMouseOut={(e) => {
+          e.target.style.transform = 'scale(1)';
+          e.target.style.backgroundColor = '#3b82f6';
+        }}
+      >
+        {isChatOpen ? '×' : '💬'}
+      </button>
 
       <Footer />
     </>
