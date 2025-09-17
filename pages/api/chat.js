@@ -11,7 +11,9 @@ import { smartSearchTool, weatherTool } from "../../lib/tools.js";
 /**
  * Initialize the Google Generative AI API
  */
-const google = createGoogleGenerativeAI();
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
 
 export default async function handler(req) {
   try {
