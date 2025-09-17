@@ -1,13 +1,7 @@
+"use client";
 import Chat from "../components/Chat";
 import { useChat } from "@ai-sdk/react";
 import { useEffect } from "react";
-
-// Disable static generation for this page since it uses client-side hooks
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
 
 const ChatbotPage = () => {
   const {
@@ -24,7 +18,7 @@ const ChatbotPage = () => {
       setMessages([
         {
           role: "assistant",
-          content: "Welcome to the Smart Search chatbot! Ask me anything about the content on this website.",
+          content: "Welcome to the Smart Search chatbot!",
           id: "welcome",
         },
       ]);
@@ -47,3 +41,9 @@ const ChatbotPage = () => {
 };
 
 export default ChatbotPage;
+
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}
