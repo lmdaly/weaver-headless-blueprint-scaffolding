@@ -10,10 +10,10 @@ import { useQuery, gql } from "@apollo/client";
 import { getNextStaticProps } from "@faustwp/core";
 import { useState } from "react";
 
-// GraphQL query to get a random post for the homepage
-const GET_RANDOM_POST = gql`
-  query GetRandomPost {
-    posts(first: 1, where: { orderby: { field: RAND, order: DESC } }) {
+// GraphQL query to get recent posts for random selection
+const GET_POSTS_FOR_RANDOM = gql`
+  query GetPostsForRandom {
+    posts(first: 10, where: { orderby: { field: DATE, order: DESC } }) {
       nodes {
         id
         title
@@ -61,13 +61,16 @@ export default function FrontPage(props) {
 
   const siteDataQuery = useQuery(SITE_DATA_QUERY) || {};
   const headerMenuDataQuery = useQuery(HEADER_MENU_QUERY) || {};
-  const randomPostQuery = useQuery(GET_RANDOM_POST) || {};
+  const postsQuery = useQuery(GET_POSTS_FOR_RANDOM) || {};
 
   const siteData = siteDataQuery?.data?.generalSettings || {};
   const menuItems = headerMenuDataQuery?.data?.primaryMenuItems?.nodes || {
     nodes: [],
   };
-  const randomPost = randomPostQuery?.data?.posts?.nodes?.[0] || null;
+  const posts = postsQuery?.data?.posts?.nodes || [];
+  
+  // Select a random post from the available posts
+  const randomPost = posts.length > 0 ? posts[Math.floor(Math.random() * posts.length)] : null;
   
   const { title: siteTitle, description: siteDescription } = siteData;
 
@@ -513,6 +516,6 @@ FrontPage.queries = [
     query: HEADER_MENU_QUERY,
   },
   {
-    query: GET_RANDOM_POST,
+    query: GET_POSTS_FOR_RANDOM,
   },
 ];
