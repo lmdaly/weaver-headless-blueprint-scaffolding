@@ -1,6 +1,6 @@
 "use client";
 import Chat from "../components/Chat";
-import { useChat } from "ai/react";
+import { useChat } from "ai";
 import { useEffect } from "react";
 
 const ChatbotPage = () => {
